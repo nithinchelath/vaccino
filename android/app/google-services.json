@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "786475015744",
+    "project_id": "vaccino-9386f",
+    "storage_bucket": "vaccino-9386f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:786475015744:android:4f643ba61c95281ad909a5",
+        "android_client_info": {
+          "package_name": "com.example.vaccino"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8FRsnL8Mm5JmXZX4TCunWHSfNXf4hjVc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
