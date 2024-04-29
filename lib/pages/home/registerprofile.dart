@@ -89,19 +89,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
       ),
     );
   }
-
-  Future<void> _registerChild() async {
-    final child = Child(name: _name, dob: _dob, gender: _gender);
+ Future<void> _registerChild() async {
+    final child = Child(id: '', name: _name, dob: _dob, gender: _gender); // Temporary ID
     try {
-      // Fetch the current user's ID
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Use the user's ID to store the child data
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('child').add(child.toMap());
-        widget.onRegisterSuccess(); // Call the callback
+        final docRef = await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('child').add(child.toMap());
+        final childWithId = Child(id: docRef.id, name: _name, dob: _dob, gender: _gender); // Use the document ID
+        // You might want to do something with childWithId, like updating the UI or storing it locally
+        widget.onRegisterSuccess();
         Navigator.pop(context);
       } else {
-        // Handle the case where there is no current user
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No user is currently signed in.')),
         );
@@ -111,6 +109,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         SnackBar(content: Text('Failed to register child: $e')),
       );
     }
-  }
+ }
+
 
 }

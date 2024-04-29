@@ -18,7 +18,6 @@ class _HomePageState extends State<HomePage> {
   static const List<Widget> _widgetOptions = <Widget>[
     Text('Home'),
     Text('Profile'),
-    Text('Schedule'),
     Text('Logout')
     // Add more pages as needed
   ];
@@ -42,26 +41,20 @@ class _HomePageState extends State<HomePage> {
                   );
                 })),
       );
-    }
-    if (index == 2) {
-      // Assuming the vaccination schedule is the third item
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => VaccinationSchedulePage()),
-      );
-    } else if (index == 3) {
+    } else if (index == 2) {
       // Assuming the taxi services is the fourth item
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => TaxiService()),
       );
     }
-    if (index == 4) { // Assuming the logout is the fourth item
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LogoutPage()),
-    );
- }
+    if (index == 3) {
+      // Assuming the logout is the fourth item
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => LogoutPage()),
+      );
+    }
   }
 
   @override
@@ -118,8 +111,10 @@ class _HomePageState extends State<HomePage> {
           return ListView.builder(
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
+              final doc = snapshot.data!.docs[index];
               final childData = Child.fromMap(
-                  snapshot.data!.docs[index].data() as Map<String, dynamic>);
+                  doc.data() as Map<String, dynamic>,
+                  doc.id); // Pass the document ID as the second argument
               return ListTile(
                 title: Text(childData.name),
                 subtitle: Text(
@@ -145,10 +140,6 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.add, color: Colors.pink),
             label: 'Register',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today, color: Colors.pink),
-            label: 'Schedule',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_car, color: Colors.pink),
@@ -187,6 +178,19 @@ class ChildProfile extends StatelessWidget {
             Text(
                 'Date of Birth: ${DateFormat('yyyy-MM-dd').format(child.dob)}'),
             Text('Gender: ${child.gender}'),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the VaccinationSchedulePage
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        VaccinationSchedulePage(childId: child.id),
+                  ),
+                );
+              },
+              child: Text('View Vaccination Schedule'),
+            ),
             // Add more details as needed
           ],
         ),
@@ -196,6 +200,10 @@ class ChildProfile extends StatelessWidget {
 }
 
 class VaccinationSchedulePage extends StatefulWidget {
+  final String childId; // Add this line to accept a childId
+
+  VaccinationSchedulePage({required this.childId}); // Modify the constructor
+
   @override
   _VaccinationSchedulePageState createState() =>
       _VaccinationSchedulePageState();
@@ -203,9 +211,43 @@ class VaccinationSchedulePage extends StatefulWidget {
 
 class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
   final _formKey = GlobalKey<FormState>();
-  DateTime _dob = DateTime.now();
+  DateTime _dob =
+      DateTime.now(); // This might not be needed if you're passing the DOB
   final TextEditingController _dobController = TextEditingController();
   List<Map<String, dynamic>> _vaccinationSchedule = [];
+
+  Future<DateTime> getChildDOB(String childId) async {
+    try {
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('users') // Adjust the collection name as needed
+          .doc(FirebaseAuth
+              .instance.currentUser!.uid) // Adjust the document ID as needed
+          .collection('child') // Adjust the subcollection name as needed
+          .doc(childId)
+          .get();
+
+      if (docSnapshot.exists) {
+        final childData = docSnapshot.data() as Map<String, dynamic>;
+        final dobString = childData[
+            'dob']; // Assuming 'dob' is stored as a string in Firestore
+        return DateTime.parse(
+            dobString); // Convert the string to a DateTime object
+      } else {
+        throw Exception('Child document not found');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch child DOB: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Assuming getChildDOB is an asynchronous method that fetches the DOB
+    getChildDOB(widget.childId).then((dob) {
+      fetchVaccinationSchedule(dob);
+    });
+  }
 
   @override
   void dispose() {
@@ -216,96 +258,79 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        // Ensure this wraps the entire content
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: <Widget>[
-              TextFormField(
-                controller: _dobController,
-                decoration: InputDecoration(labelText: 'Date of Birth'),
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: _dob,
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null && picked != _dob) {
-                    setState(() {
-                      _dob = picked;
-                      _dobController.text = _dob.toString();
-                    });
-                  }
-                },
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return 'Please enter your date of birth';
-                  }
-                  return null;
-                },
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    fetchVaccinationSchedule(_dob);
-                  }
-                },
-                child: Text('Submit'),
-              ),
-              if (_vaccinationSchedule.isNotEmpty)
-                SingleChildScrollView(
-                  // Wrap the DataTable in a SingleChildScrollView for horizontal scrolling
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: 6.0,
-                    dataRowHeight: 100.0,
-                    headingRowHeight: 50.0,
-                    dividerThickness: 2.0,
-                    border: TableBorder.all(
-                      color: Colors.grey,
-                      width: 2.0,
-                    ),
-                    columns: const <DataColumn>[
-                      DataColumn(label: Text('Vaccination')),
-                      DataColumn(label: Text('Date')),
-                      DataColumn(label: Text('Time Period')),
-                      DataColumn(label: Text('Booking')),
-                    ],
-                    rows: _vaccinationSchedule.map((vaccine) {
-                      return DataRow(
-                        cells: <DataCell>[
-                          DataCell(Text(vaccine['name'])),
-                          DataCell(Text(vaccine['date'].toString())),
-                          DataCell(Text(vaccine['timePeriod'])),
-                          DataCell(TextButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      BookingPage(vaccineName: vaccine['name']),
-                                ),
-                              );
-                            },
-                            child: Text(vaccine['booking']),
-                          )),
-                        ],
-                      );
-                    }).toList(),
+      appBar: AppBar(
+      title: Text('Vaccination Schedule'),
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    ),
+      body: SafeArea(
+        child: FutureBuilder<DateTime>(
+          future: getChildDOB(widget.childId), // Fetch the DOB based on childId
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                  child:
+                      CircularProgressIndicator()); // Show a loading indicator while waiting
+            } else if (snapshot.hasError) {
+              return Center(
+                  child: Text(
+                      'Error: ${snapshot.error}')); // Show error message if something went wrong
+            } else {
+              // Once the DOB is fetched, fetch and display the vaccination schedule
+              // The fetchVaccinationSchedule method should be called in initState, not here.
+              return SingleChildScrollView(
+                child: DataTable(
+                  columnSpacing: 6.0,
+                  dataRowHeight: 100.0,
+                  headingRowHeight: 50.0,
+                  dividerThickness: 2.0,
+                  border: TableBorder.all(
+                    color: Colors.grey,
+                    width: 2.0,
                   ),
+                  columns: const <DataColumn>[
+                    DataColumn(label: Text('Vaccination')),
+                    DataColumn(label: Text('Date')),
+                    DataColumn(label: Text('Time Period')),
+                    DataColumn(label: Text('Booking')),
+                  ],
+                  rows: _vaccinationSchedule.map((vaccine) {
+                    return DataRow(
+                      cells: <DataCell>[
+                        DataCell(Text(vaccine['name'])),
+                        DataCell(Text(vaccine['date'].toString())),
+                        DataCell(Text(vaccine['timePeriod'])),
+                        DataCell(TextButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => BookingPage(
+                                  vaccineName: vaccine['name'],
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(vaccine['booking']),
+                        )),
+                      ],
+                    );
+                  }).toList(),
                 ),
-            ],
-          ),
+              );
+            }
+          },
         ),
       ),
     );
   }
 
-  void fetchVaccinationSchedule(DateTime dob) async {
-    // Assuming you have a method to calculate the vaccination schedule based on DOB
-    _vaccinationSchedule = calculateVaccinationSchedule(dob);
-    setState(() {});
+  void fetchVaccinationSchedule(DateTime dob) {
+    List<Map<String, dynamic>> schedule = calculateVaccinationSchedule(dob);
+    setState(() {
+      _vaccinationSchedule = schedule;
+    });
   }
 
   List<Map<String, dynamic>> calculateVaccinationSchedule(DateTime dob) {
@@ -318,7 +343,7 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
       'date': date,
       'timePeriod': 'At birth or as early as possible till one year of age',
       'booking': 'Available',
-      'booked': 'false',
+      'booked': false,
     });
 
     date = incrementDate(date, months: 0, days: 1); // Increment 1 day
@@ -328,7 +353,7 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
       'date': date,
       'timePeriod': 'At birth or as possible within 24 hours',
       'booking': 'Available',
-      'booked': 'false',
+      'booked': false,
     });
 
     date = incrementDate(date, months: 0, days: 15);
@@ -337,8 +362,10 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
       'date': date,
       'timePeriod': 'At birth or as early as possible within the first 15 days',
       'booking': 'Available',
-      'booked': 'false',
+      'booked': false,
     });
+
+    // Calculate dates for vaccines that occur at specific intervals
     DateTime dateAt6Weeks =
         incrementDate(dob, months: 0, days: 42); // 6 weeks = 42 days
     DateTime dateAt10Weeks = incrementDate(dob,
@@ -346,129 +373,28 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
     DateTime dateAt14Weeks = incrementDate(dob,
         months: 3, days: 14); // 14 weeks = 3 months and 14 days
 
-    schedule.add({
-      'name': 'OPV 1,2 &3',
-      'date': [
-        dateAt6Weeks,
-        dateAt10Weeks,
-        dateAt14Weeks,
-      ],
-      'timePeriod': 'At 6, 10, and 14 weeks of age',
-      'booking': 'Available',
-      'booked': 'false',
-    });
+    // Add vaccines that occur at 6, 10, and 14 weeks
+    schedule.addAll([
+      {
+        'name': 'OPV 1,2 &3',
+        'date': [dateAt6Weeks, dateAt10Weeks, dateAt14Weeks],
+        'timePeriod': 'At 6, 10, and 14 weeks of age',
+        'booking': 'Available',
+        'booked': false,
+      },
+      {
+        'name': 'Pentavalent 1,2 & 3',
+        'date': [dateAt6Weeks, dateAt10Weeks, dateAt14Weeks],
+        'timePeriod':
+            'At 6 weeks, 10 weeks, and 14 weeks (can be given till 1 years of age)',
+        'booking': 'Available',
+        'booked': false,
+      },
+      // Add more vaccines as needed
+    ]);
 
-    schedule.add({
-      'name': 'Pentavalent 1,2 & 3',
-      'date': [
-        dateAt6Weeks,
-        dateAt10Weeks,
-        dateAt14Weeks,
-      ],
-      'timePeriod':
-          'At 6 weeks, 10 weeks, and 14 weeks (can be given till 1 years of age)',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    // Add more vaccines as needed
+    // Continue adding other vaccines and their schedules...
 
-    schedule.add({
-      'name': 'Rotavirus#',
-      'date': [
-        dateAt6Weeks,
-        dateAt10Weeks,
-        dateAt14Weeks,
-      ],
-      'timePeriod':
-          'At 6 weeks, 10 weeks, and 14 weeks (can be given till 1 years of age)',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-
-    schedule.add({
-      'name': 'IPV',
-      'date': [
-        dateAt6Weeks,
-        dateAt14Weeks,
-      ],
-      'timePeriod': 'Two Fractional dose  at 6 and 14 weeks of age',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-
-    schedule.add({
-      'name': 'PCV',
-      'date': [
-        dateAt6Weeks,
-        dateAt14Weeks,
-      ],
-      'timePeriod': 'At 6 and 14 weeks of age',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    DateTime dateAt16mon =
-        incrementDate(dob, months: 16, days: 0); // 6 weeks = 42 days/
-
-    schedule.add({
-      'name': 'DPT Booster 1',
-      'date': dateAt16mon,
-      'timePeriod': 'Between 16-24 months',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    schedule.add({
-      'name': 'Vitamin-A 2',
-      'date': dateAt16mon,
-      'timePeriod': 'Between 16-24 months',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    schedule.add({
-      'name': 'MR',
-      'date': dateAt16mon,
-      'timePeriod': 'Between 16-24 months',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    schedule.add({
-      'name': 'JE',
-      'date': dateAt16mon,
-      'timePeriod': 'Between 16-24 months',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-
-    schedule.add({
-      'name': 'OPV',
-      'date': dateAt16mon,
-      'timePeriod': 'Between 16-24 months',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    DateTime dateAt5year = incrementDate(dob, months: 0, year: 5, days: 0);
-    schedule.add({
-      'name': 'DPT Booster 2',
-      'date': dateAt5year,
-      'timePeriod': 'Between 5-6 years of age',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    DateTime dateAt10year = incrementDate(dob, months: 0, year: 10, days: 0);
-    schedule.add({
-      'name': 'TD',
-      'date': dateAt10year,
-      'timePeriod': 'At 10 years of age',
-      'booking': 'Available',
-      'booked': 'false',
-    });
-    DateTime dateAt16year = incrementDate(dob, months: 0, year: 16, days: 0);
-    schedule.add({
-      'name': 'TD',
-      'date': dateAt16year,
-      'timePeriod': 'At 16 years of age',
-      'booking': 'Available',
-      'booked': 'false',
-    });
     return schedule;
   }
 
@@ -483,44 +409,44 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
     // Update the UI to reflect the change
     setState(() {});
   }
-}
 
-DateTime incrementDate(DateTime date,
-    {int months = 0, int year = 0, int days = 0}) {
-  // Increment date by given months and days
-  int year = date.year;
-  int month = date.month + months;
-  int day = date.day + days;
-
-  // Adjust if month exceeds 12
-  if (month > 12) {
-    month -= 12;
-    year++;
-  }
-
-  // Adjust if day exceeds 31
-  while (day > 31) {
-    if ([4, 6, 9, 11].contains(month)) {
-      // April, June, September, November have 30 days
-      day -= 30;
-      month++;
-    } else if (month == 2) {
-      // February has 28 days (for simplicity)
-      day -= 28;
-      month++;
-    } else {
-      day -= 31;
-      month++;
-    }
+  DateTime incrementDate(DateTime date,
+      {int months = 0, int year = 0, int days = 0}) {
+    // Increment date by given months and days
+    int year = date.year;
+    int month = date.month + months;
+    int day = date.day + days;
 
     // Adjust if month exceeds 12
     if (month > 12) {
       month -= 12;
       year++;
     }
-  }
 
-  return DateTime(year, month, day);
+    // Adjust if day exceeds 31
+    while (day > 31) {
+      if ([4, 6, 9, 11].contains(month)) {
+        // April, June, September, November have 30 days
+        day -= 30;
+        month++;
+      } else if (month == 2) {
+        // February has 28 days (for simplicity)
+        day -= 28;
+        month++;
+      } else {
+        day -= 31;
+        month++;
+      }
+
+      // Adjust if month exceeds 12
+      if (month > 12) {
+        month -= 12;
+        year++;
+      }
+    }
+
+    return DateTime(year, month, day);
+  }
 }
 
 class TaxiService extends StatefulWidget {
@@ -638,7 +564,10 @@ class LogoutPage extends StatelessWidget {
           onPressed: () async {
             await FirebaseAuth.instance.signOut();
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => LoginPage(onTap: () {  },)),
+              MaterialPageRoute(
+                  builder: (context) => LoginPage(
+                        onTap: () {},
+                      )),
             );
           },
           child: Text('Logout'),

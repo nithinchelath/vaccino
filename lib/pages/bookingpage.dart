@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class BookingPage extends StatefulWidget {
   final String vaccineName;
@@ -22,128 +25,177 @@ class _BookingPageState extends State<BookingPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(18.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('Vaccination Center'),
-            DropdownButton<String>(
-              value: selectedCenter,
-              onChanged: (String? newValue) {
-                setState(() {
-                  selectedCenter = newValue;
-                });
-              },
-              items: <String>['Center 1', 'Center 2']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-            ),
-            if (selectedCenter != null) Text('Selected Center: $selectedCenter'),
-            Text('Select Date'),
-            Container(
-              margin: EdgeInsets.symmetric(vertical: 10.0),
-              padding: EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: ElevatedButton(
-                onPressed: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2025),
-                  );
-                  setState(() {
-                    selectedDate = picked;
-                  });
-                },
-                child: Text(selectedDate != null ? selectedDate!.toIso8601String() : 'Select Date'),
-              ),
-            ),
-            if (selectedDate != null) Text('Selected Date: ${selectedDate!.toIso8601String()}'),
-            Text('Select Time Slot'),
-            Container(
-              margin: EdgeInsets.symmetric(vertical: 10.0),
-              padding: EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child:ElevatedButton(
-                onPressed: () async {
-                  final String? newSelectedSlot = await showDialog<String>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Select Time Slot'),
-                        content: SingleChildScrollView(
-                          child: ListBody(
-                            children: <Widget>[
-                              TextButton(
-                                child: Text('10:00'),
-                                onPressed: () => Navigator.of(context).pop('10:00'),
-                              ),
-                              TextButton(
-                                child: Text('10:10'),
-                                onPressed: () => Navigator.of(context).pop('10:10'),
-                              ),
-                              TextButton(
-                                child: Text('10:15'),
-                                onPressed: () => Navigator.of(context).pop('10:15'),
-                              ),
-                              // Add more slots as needed
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                  setState(() {
-                    selectedSlot = newSelectedSlot; // Use the class-level variable
-                  });
-                },
-                child: Text(selectedSlot ?? 'Select Time Slot'),
-              ),
-
-
-            ),
-
-            if (selectedSlot != null) Text('Selected Slot: $selectedSlot'),
-            ElevatedButton(
-              onPressed: () {
-                // Handle booking logic here
-                if (selectedCenter != null && selectedDate != null && selectedSlot != null) {
-                  print('Booking confirmed for $selectedCenter on ${selectedDate!.toIso8601String()} at $selectedSlot');
-                  // You can now use the selectedCenter, selectedDate, and selectedSlot for further processing
-
-                  // Show a SnackBar with the confirmation message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Booking confirmed for $selectedCenter on ${selectedDate!.toIso8601String()} at $selectedSlot'),
-                      duration: Duration(seconds: 3), // Show for 3 seconds
-                    ),
-                  );
-                } else {
-                  print('Please select a center, a date, and a time slot.');
-                  // Optionally, show a SnackBar to prompt the user to fill in all fields
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Please select a center, a date, and a time slot.'),
-                      duration: Duration(seconds: 3), // Show for 3 seconds
-                    ),
-                  );
-                }
-              },
-              child: Text('Book'),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildCenterDropdown(),
+              _buildDateSelector(),
+              _buildSlotSelector(),
+              _buildBookButton(context),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCenterDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Vaccination Center'),
+        DropdownButton<String>(
+          value: selectedCenter,
+          onChanged: (String? newValue) {
+            setState(() {
+              selectedCenter = newValue;
+            });
+          },
+          items: ['Center 1', 'Center 2'].map((center) {
+            return DropdownMenuItem<String>(
+              value: center,
+              child: Text(center),
+            );
+          }).toList(),
+        ),
+        if (selectedCenter != null) Text('Selected Center: $selectedCenter'),
+      ],
+    );
+  }
+
+  Widget _buildDateSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Select Date'),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: ElevatedButton(
+            onPressed: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2025),
+              );
+
+              if (picked != null) {
+                setState(() {
+                  selectedDate = picked;
+                });
+              }
+            },
+            child: Text(
+              selectedDate != null
+                  ? DateFormat('yyyy-MM-dd').format(selectedDate!) // Display only date
+                  : 'Select Date',
+            ),
+          ),
+        ),
+        if (selectedDate != null)
+          Text('Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}'), // Only date
+      ],
+    );
+  }
+
+  Widget _buildSlotSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Select Time Slot'),
+        ElevatedButton(
+          onPressed: () async {
+            final slot = await showDialog<String>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Select Time Slot'),
+                  content: SingleChildScrollView(
+                    child: ListBody(
+                      children: [
+                        TextButton(
+                          child: Text('10:00'),
+                          onPressed: () => Navigator.of(context).pop('10:00'),
+                        ),
+                        TextButton(
+                          child: Text('10:10'),
+                          onPressed: () => Navigator.of(context).pop('10:10'),
+                        ),
+                        TextButton(
+                          child: Text('10:15'),
+                          onPressed: () => Navigator.of(context).pop('10:15'),
+                        ),
+                        // Add more slots if necessary
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+
+            if (slot != null) {
+              setState(() {
+                selectedSlot = slot;
+              });
+            }
+          },
+          child: Text(selectedSlot ?? 'Select Time Slot'),
+        ),
+        if (selectedSlot != null) Text('Selected Slot: $selectedSlot'),
+      ],
+    );
+  }
+
+  Widget _buildBookButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        if (selectedCenter == null || selectedDate == null || selectedSlot == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please select a center, a date, and a time slot.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('center', isEqualTo: selectedCenter)
+            .where('date', isEqualTo: DateFormat('yyyy-MM-dd').format(selectedDate!)) // Only date
+            .where('timeSlot', isEqualTo: selectedSlot)
+            .get();
+
+        if (querySnapshot.docs.length >= 15) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('The selected time slot is full. Please select another slot.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+
+        await FirebaseFirestore.instance.collection('bookings').add({
+          'vaccineName': widget.vaccineName,
+          'center': selectedCenter,
+          'date': DateFormat('yyyy-MM-dd').format(selectedDate!), // Store only date
+          'timeSlot': selectedSlot,
+          'userId': FirebaseAuth.instance.currentUser!.uid,
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Booking confirmed for $selectedCenter on ${DateFormat('yyyy-MM-dd').format(selectedDate!)} at $selectedSlot'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      },
+      child: Text('Book'),
     );
   }
 }
