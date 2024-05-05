@@ -225,6 +225,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                 "Pending verification",
                 style: TextStyle(color: Colors.orange, fontSize: 18),
               ),
+            if (_isVerified == true)
             if (_bookings.isNotEmpty)
               Expanded(
                 child: ListView.builder(

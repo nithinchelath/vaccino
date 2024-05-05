@@ -3,6 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vaccino/pages/home/doctorhome.dart';
 import 'package:vaccino/pages/home/homepage.dart';
+import 'package:vaccino/pages/home/adminHome.dart';
+
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:vaccino/pages/home/doctorhome.dart';
+import 'package:vaccino/pages/home/homepage.dart';
+import 'package:vaccino/pages/home/adminHome.dart'; // Import your AdminHomePage
 
 class AuthPage extends StatelessWidget {
   const AuthPage({super.key});
@@ -30,8 +38,15 @@ class AuthPage extends StatelessWidget {
               Map<String, dynamic> userData =
                   snapshot.data!.data() as Map<String, dynamic>;
               String role = userData['role'];
+              String email = FirebaseAuth.instance.currentUser!.email!;
+
               WidgetsBinding.instance!.addPostFrameCallback((_) {
-                if (role == 'Parent') {
+                if (email == 'admin1@gmail.com') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AdminHomePage()),
+                  );
+                } else if (role == 'Parent') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => HomePage()),
@@ -57,6 +72,7 @@ class AuthPage extends StatelessWidget {
     );
   }
 }
+
 
 class UserProfileForm extends StatefulWidget {
   @override
