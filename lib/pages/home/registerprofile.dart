@@ -57,7 +57,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   }
                 },
                 readOnly: true,
-                controller: TextEditingController(text: DateFormat('yyyy-MM-dd').format(_dob)),
+                controller: TextEditingController(
+                    text: DateFormat('yyyy-MM-dd').format(_dob)),
               ),
               DropdownButton<String>(
                 value: _gender,
@@ -89,13 +90,23 @@ class _RegistrationPageState extends State<RegistrationPage> {
       ),
     );
   }
- Future<void> _registerChild() async {
-    final child = Child(id: '', name: _name, dob: _dob, gender: _gender); // Temporary ID
+
+  Future<void> _registerChild() async {
+    final child =
+        Child(id: '', name: _name, dob: _dob, gender: _gender); // Temporary ID
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final docRef = await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('child').add(child.toMap());
-        final childWithId = Child(id: docRef.id, name: _name, dob: _dob, gender: _gender); // Use the document ID
+        final docRef = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('child')
+            .add(child.toMap());
+        final childWithId = Child(
+            id: docRef.id,
+            name: _name,
+            dob: _dob,
+            gender: _gender); // Use the document ID
         // You might want to do something with childWithId, like updating the UI or storing it locally
         widget.onRegisterSuccess();
         Navigator.pop(context);
@@ -109,7 +120,5 @@ class _RegistrationPageState extends State<RegistrationPage> {
         SnackBar(content: Text('Failed to register child: $e')),
       );
     }
- }
-
-
+  }
 }

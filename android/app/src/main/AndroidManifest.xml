@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- Add the required permissions for external storage and camera -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+   <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+
     <application
         android:label="vaccino"
         android:name=".MyApplication"

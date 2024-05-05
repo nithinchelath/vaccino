@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:vaccino/pages/auth_page.dart';
-import 'firebase_options.dart';
+import 'package:vaccino/firebase_options.dart';
+import 'package:vaccino/pages/authpage.dart';
 
 void main() async {
  WidgetsFlutterBinding.ensureInitialized();

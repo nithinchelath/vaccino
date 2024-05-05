@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
         MaterialPageRoute(
             builder: (context) => RegistrationPage(onRegisterSuccess: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Child registered successfully!'),
                       duration: Duration(seconds: 2),
                     ),
@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home'),
+        title: const Text('Home'),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -71,11 +71,11 @@ class _HomePageState extends State<HomePage> {
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text('Something went wrong');
+            return const Text('Something went wrong');
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.data!.docs.isEmpty) {
@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("No children registered yet."),
+                  const Text("No children registered yet."),
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
                             builder: (context) =>
                                 RegistrationPage(onRegisterSuccess: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                       content: Text(
                                           'Child registered successfully!'),
                                       duration: Duration(seconds: 2),
@@ -101,7 +101,7 @@ class _HomePageState extends State<HomePage> {
                                 })),
                       );
                     },
-                    child: Text("Register New Child"),
+                    child: const Text("Register New Child"),
                   ),
                 ],
               ),
@@ -189,7 +189,7 @@ class ChildProfile extends StatelessWidget {
                   ),
                 );
               },
-              child: Text('View Vaccination Schedule'),
+              child: const Text('View Vaccination Schedule'),
             ),
             // Add more details as needed
           ],
@@ -211,8 +211,7 @@ class VaccinationSchedulePage extends StatefulWidget {
 
 class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
   final _formKey = GlobalKey<FormState>();
-  DateTime _dob =
-      DateTime.now(); // This might not be needed if you're passing the DOB
+  DateTime _dob =DateTime.now(); // This might not be needed if you're passing the DOB
   final TextEditingController _dobController = TextEditingController();
   List<Map<String, dynamic>> _vaccinationSchedule = [];
 
@@ -259,9 +258,9 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-      title: Text('Vaccination Schedule'),
+      title: const Text('Vaccination Schedule'),
       leading: IconButton(
-        icon: Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back),
         onPressed: () => Navigator.of(context).pop(),
       ),
     ),
@@ -270,7 +269,7 @@ class _VaccinationSchedulePageState extends State<VaccinationSchedulePage> {
           future: getChildDOB(widget.childId), // Fetch the DOB based on childId
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
+              return const Center(
                   child:
                       CircularProgressIndicator()); // Show a loading indicator while waiting
             } else if (snapshot.hasError) {
@@ -501,11 +500,11 @@ class _TaxiServicePageState extends State<TaxiService> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Taxi Service'),
+        title: const Text('Taxi Service'),
       ),
       body: Center(
         child: _isLoading
-            ? CircularProgressIndicator()
+            ? const CircularProgressIndicator()
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -516,7 +515,7 @@ class _TaxiServicePageState extends State<TaxiService> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            title: Text('Enter Place'),
+                            title: const Text('Enter Place'),
                             content: TextField(
                               onSubmitted: (value) {
                                 Navigator.of(context).pop(value);
@@ -524,7 +523,7 @@ class _TaxiServicePageState extends State<TaxiService> {
                             ),
                             actions: <Widget>[
                               TextButton(
-                                child: Text('OK'),
+                                child: const Text('OK'),
                                 onPressed: () {
                                   Navigator.of(context).pop(null);
                                 },
@@ -537,13 +536,13 @@ class _TaxiServicePageState extends State<TaxiService> {
                         _fetchTaxiServiceNumber(place);
                       }
                     },
-                    child: Text('Get Taxi Service Number'),
+                    child: const Text('Get Taxi Service Number'),
                   ),
                   ElevatedButton(
                     onPressed: _taxiServiceNumber.isEmpty
                         ? null
                         : () => _makeCall(_taxiServiceNumber),
-                    child: Text('Call Taxi Service'),
+                    child: const Text('Call Taxi Service'),
                   ),
                 ],
               ),
@@ -557,7 +556,7 @@ class LogoutPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Logout'),
+        title: const Text('Logout'),
       ),
       body: Center(
         child: ElevatedButton(
@@ -570,7 +569,7 @@ class LogoutPage extends StatelessWidget {
                       )),
             );
           },
-          child: Text('Logout'),
+          child: const Text('Logout'),
         ),
       ),
     );

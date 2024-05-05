@@ -195,6 +195,7 @@ class _BookingPageState extends State<BookingPage> {
           ),
         );
       },
+      
       child: Text('Book'),
     );
   }
