@@ -5,12 +5,7 @@ import 'package:vaccino/pages/home/doctorhome.dart';
 import 'package:vaccino/pages/home/homepage.dart';
 import 'package:vaccino/pages/home/adminHome.dart';
 
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:vaccino/pages/home/doctorhome.dart';
-import 'package:vaccino/pages/home/homepage.dart';
-import 'package:vaccino/pages/home/adminHome.dart'; // Import your AdminHomePage
+ // Import your AdminHomePage
 
 class AuthPage extends StatelessWidget {
   const AuthPage({super.key});
@@ -41,7 +36,7 @@ class AuthPage extends StatelessWidget {
               String email = FirebaseAuth.instance.currentUser!.email!;
 
               WidgetsBinding.instance!.addPostFrameCallback((_) {
-                if (email == 'admin1@gmail.com') {
+                if (email == 'admin@gmail.com') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => AdminHomePage()),
