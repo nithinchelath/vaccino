@@ -2,6 +2,9 @@ import 'package:vaccino/components/mybutton.dart';
 import 'package:vaccino/components/textfils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:vaccino/pages/authpage.dart';
+import 'package:vaccino/pages/home/homepage.dart';
+
 
 class LoginPage extends StatefulWidget {
   final Function()? onTap;
@@ -22,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
 
   //sign in user
   void signIn() async {
-    //show loading circle
+    // Show loading circle
     showDialog(
       context: context,
       builder: (context) {
@@ -31,18 +34,23 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
-    // try sign in
+    // Try sign in
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: usernameController.text,
         password: passwordController.text,
       );
-      // pop the loading circle
+      // Pop the loading circle
       Navigator.pop(context);
+      // Navigate to HomePage
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AuthPage()),
+      );
     } on FirebaseAuthException catch (e) {
-      // pop the loading circle
+      // Pop the loading circle
       Navigator.pop(context);
-      //error
+      // Error
       showErrorMessage(e.code);
     }
   }

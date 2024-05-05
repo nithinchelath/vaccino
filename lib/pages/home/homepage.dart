@@ -7,7 +7,7 @@ import 'package:vaccino/pages/bookingpage.dart';
 import 'package:vaccino/pages/home/childprofile.dart';
 import 'package:vaccino/pages/home/registerprofile.dart';
 import 'package:vaccino/pages/login.dart'; // Ensure this import path is correct
-
+import 'package:vaccino/pages/loginsignup.dart';
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
@@ -26,9 +26,9 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _selectedIndex = index;
     });
-    // Navigation logic for the "Register" item
+
     if (index == 1) {
-      // Assuming the "Register" item is at index 1
+      // Navigation logic for the "Register" item
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -42,20 +42,22 @@ class _HomePageState extends State<HomePage> {
                 })),
       );
     } else if (index == 2) {
-      // Assuming the taxi services is the fourth item
+      // Navigation logic for the "Taxi Services" item
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => TaxiService()),
       );
-    }
-    if (index == 3) {
-      // Assuming the logout is the fourth item
-      Navigator.push(
+    } else if (index == 3) {
+      // Navigation logic for the "Logout" item
+      FirebaseAuth.instance.signOut().then((_) {
+        Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LogoutPage()),
+          MaterialPageRoute(builder: (context) => LoginSignupPage()),
       );
+      });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -551,27 +553,3 @@ class _TaxiServicePageState extends State<TaxiService> {
   }
 }
 
-class LogoutPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Logout'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            await FirebaseAuth.instance.signOut();
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                  builder: (context) => LoginPage(
-                        onTap: () {},
-                      )),
-            );
-          },
-          child: const Text('Logout'),
-        ),
-      ),
-    );
-  }
-}

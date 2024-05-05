@@ -180,12 +180,18 @@ class _BookingPageState extends State<BookingPage> {
           return;
         }
 
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .get();
+        final userName = userDoc.data()?['name'] ?? 'Unknown';
         await FirebaseFirestore.instance.collection('bookings').add({
           'vaccineName': widget.vaccineName,
           'center': selectedCenter,
           'date': DateFormat('yyyy-MM-dd').format(selectedDate!), // Store only date
           'timeSlot': selectedSlot,
           'userId': FirebaseAuth.instance.currentUser!.uid,
+          'userName': userName,
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
